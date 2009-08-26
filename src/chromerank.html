@@ -1,0 +1,182 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="styles.css">
+<script>
+
+
+// AllScoop
+//var service_url = "http://www.allscoop.com/ajaxpagerank/getResults.php?url=%0";
+//var service_ws_pagerank = "/result/pagerank"
+
+// Trynt
+var service_url = "http://www.trynt.com/google-pagerank-api/v1/?u=%0";
+var service_ws_pagerank = "/Trynt/Pagerank"
+
+
+var requestTimeout = 1000 * 10;  // 10 seconds
+var current_domain_name = "";
+
+function init() {
+  console.log('> init');
+  window.setTimeout(startRequest, 0);
+  console.log('< init');
+}
+
+// ajax stuff
+function startRequest() {  
+  console.log('> startRequest');
+  getRankings(
+    function(count) {
+      toggleResult();
+      updateRanking(count);
+    },
+    function() {
+      toggleNoResult();
+    }
+  );
+  console.log('< startRequest');
+}
+
+function getServiceUrl() {
+  console.log('> getServiceUrl');
+  var res = service_url.replace(/%0/, current_domain_name);
+  console.log('< getServiceUrl');
+  return res;
+}
+
+function getRankings(onSuccess, onError) {
+  console.log('> getRankings');
+  var xhr = new XMLHttpRequest();
+  var abortTimerId = window.setTimeout(function() {
+    xhr.abort();
+    onError();
+  }, requestTimeout);
+
+  function handleSuccess(count) {
+    window.clearTimeout(abortTimerId);
+    onSuccess(count);
+  }
+
+  function handleError() {
+    window.clearTimeout(abortTimerId);
+    onError();
+  }
+
+  try {
+    console.log("request..");
+    xhr.onreadystatechange = function(){
+      console.log("readystate: " + xhr.readyState);
+      if (xhr.readyState == 4) {
+        console.log("responseText: " + xhr.responseText.substring(0, 200) +"...");
+        if (xhr.responseXML) {
+          var xmlDoc = xhr.responseXML;
+          var nsResolver = xmlDoc.createNSResolver( xmlDoc.ownerDocument == null ? xmlDoc.documentElement : xmlDoc.ownerDocument.documentElement);
+          var rankingsSet = xmlDoc.evaluate(service_ws_pagerank, xmlDoc, nsResolver, XPathResult.ANY_TYPE, null);
+          var rankingsNode = rankingsSet.iterateNext();
+          if (rankingsNode) {
+            handleSuccess(rankingsNode.textContent);
+          } else {
+            console.log("pagerank not found!");
+            console.error("Error: feed retrieved, but no <" + service_ws_pagerank + "> node found");
+            handleError();
+          }
+        } else {
+          console.log("No responseXML!");
+        }
+      }
+    }
+    
+    xhr.onerror = function(error) {
+      console.log("error");
+      console.log(error);
+      handleError();
+    }
+
+    xhr.open("GET", getServiceUrl(), true);
+    xhr.send(null);
+  } catch(e) {
+    console.log("ex: " + e);
+    console.error("exception: " + e);
+    handleError();
+  }
+  console.log('< getRankings');
+}
+
+// ui stuff
+function toggleWait() {
+  console.log('> toggleWait');
+  document.getElementById("noResult").style.display = "none";
+  document.getElementById("result").style.display = "none";
+  document.getElementById("wait").style.display = "";
+  console.log('< toggleWait');
+}
+
+function toggleResult() {
+  console.log('> toggleResult');
+  document.getElementById("noResult").style.display = "none";
+  document.getElementById("result").style.display = "";
+  document.getElementById("wait").style.display = "none";
+  console.log('< toggleResult');
+}
+
+function toggleNoResult() {
+  console.log('> toggleNoResult');
+  document.getElementById("noResult").style.display = "";
+  document.getElementById("result").style.display = "none";
+  document.getElementById("wait").style.display = "none";
+  console.log('< toggleNoResult');
+}
+
+function updateRanking(ranking) {
+  console.log('> updateRanking');
+  document.getElementById("result").innerHTML = "PR: " + ranking + " <img src='" + ranking + ".png'/>";
+  console.log('< updateRanking');
+}
+
+function onChangeTabSelection(tabId){
+  console.log('> onChangeTabSelection ' + tabId);
+  chrome.tabs.getSelected(1, onSelectedTab);
+  console.log('< onChangeTabSelection');
+}
+
+function onSelectedTab(tab) {
+  console.log('> onSelectedTab ' + tab.url);
+  current_domain_name = getDomainName(tab.url);
+  console.log(current_domain_name);
+  init(); // GO!!
+  console.log('< onSelectedTab');
+}
+
+try {
+  chrome.tabs.onUpdated.addListener(onChangeTabSelection);
+  chrome.tabs.onSelectionChanged.addListener(onChangeTabSelection);
+} catch(e) {
+  console.error('chrome.tabs: ' + e);
+}
+
+function getDomainName(url) {
+  console.log('> getDomainName');
+  var res = url.split(/\/+/g)[1];
+  console.log('< getDomainName');
+  return res;
+}
+
+function manualUpdate() {
+  console.log('> manualUpdate');
+  toggleWait();
+  if(current_domain_name != "newtab") {
+    init(); // GO!!
+  }
+  console.log('< manualUpdate');
+}
+</script>
+</head>
+<body>
+  <div>
+    <input type="button" value="&raquo;" style="border: none; padding: 0; background: transparent;" onclick="manualUpdate()" />
+    <span id="noResult" style="display:none;"><i>PR unknown</i></span>
+    <span id="result" style="display:none;"></span>
+    <span id="wait"><i>loading&#8230;</i></span>
+  </div>
+</body>
+</html>
