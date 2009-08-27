@@ -16,14 +16,7 @@ var service_ws_pagerank = "/Trynt/Pagerank"
 var requestTimeout = 1000 * 10;  // 10 seconds
 var current_domain_name = "";
 
-function init() {
-  console.log('> init');
-  window.setTimeout(startRequest, 0);
-  console.log('< init');
-}
-
-// ajax stuff
-function startRequest() {  
+function GO() {  
   console.log('> startRequest');
   getRankings(
     function(count) {
@@ -102,7 +95,6 @@ function getRankings(onSuccess, onError) {
   console.log('< getRankings');
 }
 
-// ui stuff
 function toggleWait() {
   console.log('> toggleWait');
   document.getElementById("noResult").style.display = "none";
@@ -133,23 +125,29 @@ function updateRanking(ranking) {
   console.log('< updateRanking');
 }
 
-function onChangeTabSelection(tabId){
-  console.log('> onChangeTabSelection ' + tabId);
-  chrome.tabs.getSelected(1, onSelectedTab);
-  console.log('< onChangeTabSelection');
-}
-
-function onSelectedTab(tab) {
-  console.log('> onSelectedTab ' + tab.url);
-  current_domain_name = getDomainName(tab.url);
-  console.log(current_domain_name);
-  init(); // GO!!
-  console.log('< onSelectedTab');
-}
-
 try {
-  chrome.tabs.onUpdated.addListener(onChangeTabSelection);
-  chrome.tabs.onSelectionChanged.addListener(onChangeTabSelection);
+  chrome.tabs.onSelectionChanged.addListener(function(tabid, windowId) {
+    chrome.tabs.get(tabid,
+      function(currentTab) {
+        current_domain_name = getDomainName(currentTab.url);
+        GO();
+      }
+    );
+  });
+  chrome.self.onConnect.addListener(function(port) {
+      port.onMessage.addListener(function(url) {
+        current_domain_name = getDomainName(url);
+        GO();
+      });
+  });
+  chrome.tabs.onUpdated.addListener(function(tabid, windowId) {
+    chrome.tabs.get(tabid,
+      function(currentTab) {
+        current_domain_name = getDomainName(currentTab.url);
+        GO();
+      }
+    );
+  });
 } catch(e) {
   console.error('chrome.tabs: ' + e);
 }
@@ -165,7 +163,7 @@ function manualUpdate() {
   console.log('> manualUpdate');
   toggleWait();
   if(current_domain_name != "newtab") {
-    init(); // GO!!
+    GO();
   }
   console.log('< manualUpdate');
 }
