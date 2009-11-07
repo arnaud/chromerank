@@ -1,0 +1,14 @@
+h1. README
+
+**ChromeRank**: a PageRank extension for Google Chrome
+
+h2.Install 
+
+"INSTALL ChromeRank":http://cloud.github.com/downloads/arnaud/chromerank/chromerank-0.2.crx
+
+h2. Authors
+
+"arnaud":http://github.com/arnaud
+
+
+*This services is "TRYNT Web Services Powered":http://www.trynt.com/*
