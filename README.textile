@@ -4,7 +4,7 @@ h1. README
 
 h2. Install 
 
-*"INSTALL ChromeRank":http://cloud.github.com/downloads/arnaud/chromerank/chromerank-0.2.crx*
+*"INSTALL ChromeRank":http://cloud.github.com/downloads/arnaud/chromerank/chromerank-0.3.crx*
 
 h2. Contributors
 
