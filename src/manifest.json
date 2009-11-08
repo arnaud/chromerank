@@ -1,9 +1,9 @@
 {
   "name": "ChromeRank",
   "author": "Arnaud Leymet",
-  "version": "0.2",
+  "version": "0.3",
   "description": "Get the Google PageRank of any website.",
-  "update_url": "http://chromerank.googlecode.com/svn/trunk/updates.xml",
+  "update_url": "http://github.com/arnaud/chromerank/raw/master/updates.xml",
   "toolstrips": [
     "chromerank.html"
   ],

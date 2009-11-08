@@ -14,7 +14,7 @@ var service_ws_pagerank = "/Trynt/Pagerank"
 
 
 var requestTimeout = 1000 * 10;  // 10 seconds
-var current_domain_name = "";
+var current_url = "";
 
 function GO() {  
   console.log('> startRequest');
@@ -24,7 +24,16 @@ function GO() {
       updateRanking(count);
     },
     function() {
-      toggleNoResult();
+    	current_url = current_url.split(/\/+/g)[1]; // retrieve domain name
+		  getRankings(
+		    function(count) {
+		      toggleResult();
+		      updateRanking(count, true);
+		    },
+		    function() {
+		      toggleNoResult();
+		    }
+		  );
     }
   );
   console.log('< startRequest');
@@ -32,7 +41,7 @@ function GO() {
 
 function getServiceUrl() {
   console.log('> getServiceUrl');
-  var res = service_url.replace(/%0/, current_domain_name);
+  var res = service_url.replace(/%0/, current_url);
   console.log('< getServiceUrl');
   return res;
 }
@@ -119,9 +128,11 @@ function toggleNoResult() {
   console.log('< toggleNoResult');
 }
 
-function updateRanking(ranking) {
+function updateRanking(ranking, domain_only) {
   console.log('> updateRanking');
-  document.getElementById("result").innerHTML = "PR: " + ranking + " <img src='" + ranking + ".png'/>";
+  ranking_text = ranking;
+  if(domain_only) ranking_text = "[" + ranking_text + "]";
+  document.getElementById("result").innerHTML = "PR: " + ranking_text + " <img src='" + ranking + ".png'/>";
   console.log('< updateRanking');
 }
 
@@ -129,21 +140,21 @@ try {
   chrome.tabs.onSelectionChanged.addListener(function(tabid, windowId) {
     chrome.tabs.get(tabid,
       function(currentTab) {
-        current_domain_name = getDomainName(currentTab.url);
+        current_url = currentTab.url;
         GO();
       }
     );
   });
   chrome.self.onConnect.addListener(function(port) {
       port.onMessage.addListener(function(url) {
-        current_domain_name = getDomainName(url);
+        current_url = url;
         GO();
       });
   });
   chrome.tabs.onUpdated.addListener(function(tabid, windowId) {
     chrome.tabs.get(tabid,
       function(currentTab) {
-        current_domain_name = getDomainName(currentTab.url);
+        current_url = currentTab.url;
         GO();
       }
     );
@@ -152,17 +163,10 @@ try {
   console.error('chrome.tabs: ' + e);
 }
 
-function getDomainName(url) {
-  console.log('> getDomainName');
-  var res = url.split(/\/+/g)[1];
-  console.log('< getDomainName');
-  return res;
-}
-
 function manualUpdate() {
   console.log('> manualUpdate');
   toggleWait();
-  if(current_domain_name != "newtab") {
+  if(current_url != "newtab") {
     GO();
   }
   console.log('< manualUpdate');
