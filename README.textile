@@ -1,4 +1,4 @@
-h1. README
+h1. README !http://stillmaintained.com/arnaud/chromerank.png!:http://stillmaintained.com/arnaud/chromerank
 
 *ChromeRank*: a PageRank extension for Google Chrome
 
